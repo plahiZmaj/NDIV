@@ -1,36 +1,6 @@
---------------------------------------------------------------------------------
--- Company: 
--- Engineer:
---
--- Create Date:   16:49:22 11/09/2023
--- Design Name:   
--- Module Name:   C:/VHDL_Projekti/DN2/DN2/cla_gp_tb.vhd
--- Project Name:  DN2
--- Target Device:  
--- Tool versions:  
--- Description:   
--- 
--- VHDL Test Bench Created by ISE for module: cla_gp
--- 
--- Dependencies:
--- 
--- Revision:
--- Revision 0.01 - File Created
--- Additional Comments:
---
--- Notes: 
--- This testbench has been automatically generated using types std_logic and
--- std_logic_vector for the ports of the unit under test.  Xilinx recommends
--- that these types always be used for the top-level I/O of a design in order
--- to guarantee that the testbench will bind correctly to the post-implementation 
--- simulation model.
---------------------------------------------------------------------------------
 LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
- 
--- Uncomment the following library declaration if using
--- arithmetic functions with Signed or Unsigned values
---USE ieee.numeric_std.ALL;
+USE ieee.numeric_std.ALL;
  
 ENTITY cla_gp_tb IS
 END cla_gp_tb;
@@ -66,8 +36,7 @@ ARCHITECTURE behavior OF cla_gp_tb IS
    -- appropriate port name
 
 	signal clk : std_logic := '0'; -- Initialize the clock signal to '0'
- 
-   constant clk_period : time := 10 ns;
+   constant clk_period : time := 10 ns; -- perioda clk signala
  
 BEGIN
  
@@ -85,9 +54,9 @@ BEGIN
    -- Clock process definitions
    clk_process :process
   begin
-    while now < 1000 ns loop -- Adjust the simulation time as needed
-      clk <= not clk;  -- Toggle the clock signal
-      wait for clk_period;   -- Adjust the clock period as needed
+    while now < 1000 ns loop -- Simulacijski cas
+      clk <= not clk;  -- Togglanje clock signala
+      wait for clk_period;   -- Dolocanje periode
     end loop;
     wait;
   end process;
@@ -105,13 +74,13 @@ BEGIN
 				for k in 0 to 1 loop
 					
 					wait for clk_period;
-						Cin <= not Cin; -- invertiramo
+						Cin <= not Cin; -- flipamo bit
 				end loop;
 				
-				y <= not y; -- invertiramo
+				y <= not y; -- flipamo bit
 			end loop;
 			
-			x <= not x; --invertiramo
+			x <= not x; --flipamo bit
 		end loop;
 
       wait;

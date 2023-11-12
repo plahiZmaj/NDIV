@@ -11,35 +11,45 @@ ENTITY cla_add_n_bit IS
 END cla_add_n_bit;
 
 ARCHITECTURE NDV OF cla_add_n_bit IS
+	
 	COMPONENT cla_gp IS
-	PORT ( Cin, x, y : IN STD_LOGIC;
-	s, Cout, g, p : OUT STD_LOGIC );
+		PORT ( Cin, x, y : IN STD_LOGIC;
+				 s, Cout, g, p : OUT STD_LOGIC );
 	END COMPONENT;
 	
-	-- vektor vmesnih prenosov in funkcij tvorjenja in sirjenja
-	SIGNAL G, P : STD_LOGIC_VECTOR( n-1 DOWNTO 0 );
-	SIGNAL S_sig : STD_LOGIC_VECTOR( n-1 DOWNTO 0 );
-	SIGNAL Gint : STD_LOGIC_VECTOR( n-1 DOWNTO 1 );
-	SIGNAL C : STD_LOGIC_VECTOR( n DOWNTO 0 );
+	-- pomozni vektorji vmesnih prenosov, funkcij tvorjenja in sirjenja
+	SIGNAL G, P : STD_LOGIC_VECTOR( n-1 DOWNTO 0 );  -- tvorjenje, sirjenje
+	SIGNAL Gint : STD_LOGIC_VECTOR( n-1 DOWNTO 1 );  -- tvorjenje
+	SIGNAL C : STD_LOGIC_VECTOR( n DOWNTO 0 );       -- prenosi
+	SIGNAL S_sig : STD_LOGIC_VECTOR( n-1 DOWNTO 0 ); -- izhod 
 
 BEGIN
 
-	-- zacetni carry
+	-- zacetni prenos
 	C(0) <= Cin;
 	
+	-- tvorimo posebej ker tako dobimo paralelno sintezo in ne izgubimo vmesnih vrednosti
 	stages: FOR i IN 0 TO (n-1) GENERATE
-		G(i) <= X(i) and Y(i); -- funkcija tvorjenja generate
+		
 		P(i) <= X(i) xor Y(i); -- funkcija sirjenja propagate  
-		S_sig(i) <= X(i) xor Y(i) xor C(i); -- vsota 
+		G(i) <= X(i) and Y(i); -- funkcija tvorjenja generate
 		C(i+1) <= G(i) or ( P(i) and C(i) ); -- izhodni prenos 
+		S_sig(i) <= X(i) xor Y(i) xor C(i); -- vsota
+	
 	END GENERATE;
 	
 	g_stages: FOR i IN 1 TO (n-1) GENERATE
+		
 		g_stage: Gint(i) <= AND_REDUCE(P(n-1 downto i)) and G (i-1); -- enacba iz navodil
+	
 	END GENERATE;
 	
-	Pout <= AND_REDUCE (P);
+	-- vsi p-ji morejo bit postavljeni
+	Pout <= AND_REDUCE(P);
+	-- enacba iz navodil
 	Gout <= G(n-1) or OR_REDUCE(Gint);
+	
+	
 	S <= S_sig;
 	Cout <= C(n);
 	

@@ -40,13 +40,15 @@ ARCHITECTURE behavior OF alu_cla_tb IS
    signal Gout : std_logic;
    signal Pout : std_logic;
 	
-	signal X_int, Y_int : integer := 0;
-	signal S_comp, X_and_Y, 
-			 X_nand_Y, X_or_Y, X_nor_Y, 
-			 X_xor_Y, X_xnor_Y : std_logic_vector(n-1 downto 0) := (others => '0');
+	
+	-- pomozni signali za preverjat v assert
+	signal S_assert, X_and_Y, X_nand_Y, X_or_Y, X_nor_Y, X_xor_Y, X_xnor_Y : std_logic_vector(n-1 downto 0) := (others => '0');
+	
+	-- status flagi za preverjat v assert
 	signal Neg_F, Overflow_F, Zero_F : std_logic := '0';
  
 	constant zeros : std_logic_vector(n-1 downto 0) := (others => '0');
+	constant one   : std_logic_vector(n-1 downto 0) := (0 => '1', others => '0');
  
 BEGIN
    uut: alu_cla 
@@ -66,169 +68,187 @@ BEGIN
         );
 		  
    stim_proc: process
-   begin		
+   begin
+	
 		for i in -(2**(n-1)) to 2**(n-1) - 1 loop
-			X_int <= i;
+			
 			X <= std_logic_vector(to_signed(i, n));
+			
 			for j in -(2**(n-1)) to 2**(n-1) - 1 loop
-				Y_int <= j;
-				Y <= std_logic_vector(to_signed(j, n));
 				
-				M <= '0'; -- Aritmeticni nacin
-				F <= "000"; -- X + Y
-				wait for 1 ns;
-				assert(S_comp = S) report "Sum failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
-				assert(Neg_F = Negative) report "Sum N failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
-				assert(Overflow_F = Overflow) report "Sum V failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
-				assert(Zero_F = Zero) report "Sum Z failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
+				Y <= std_logic_vector(to_signed(j, n)); 
 				
-				F <= "001"; -- X - Y
-				wait for 1 ns;
-				assert(S_comp = S) report "Dif failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
-				assert(Neg_F = Negative) report "Dif N failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
-				assert(Overflow_F = Overflow) report "Dif V failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
-				assert(Zero_F = Zero) report "Dif Z failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
 				
-				F <= "010"; -- X + 1
-				wait for 1 ns;
-				assert(S_comp = S) report "X+1 failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
-				assert(Neg_F = Negative) report "X+1 N failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
-				assert(Overflow_F = Overflow) report "X+1 V failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
-				assert(Zero_F = Zero) report "X+1 Z failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
 				
-				F <= "011"; -- X - 1
-				wait for 1 ns;
-				assert(S_comp = S) report "X-1 failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
-				assert(Neg_F = Negative) report "X-1 N failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
-				assert(Overflow_F = Overflow) report "X-1 V failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
-				assert(Zero_F = Zero) report "X-1 Z failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
+				-------------------------------------------- ADRITMETICNE OPERACIJE --------------------------------------------------------                            		
 				
-				F <= "100"; -- X + X
-				wait for 1 ns;
-				assert(S_comp = S) report "X+X failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
-				assert(Neg_F = Negative) report "X+X N failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
-				assert(Overflow_F = Overflow) report "X+X V failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
-				assert(Zero_F = Zero) report "X+X Z failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
+				M <= '0'; -- M = 0 -> Aritmeticni nacin
+				F <= "000"; -- S = X + Y
 				
-				F <= "101"; -- -1
-				wait for 1 ns;
-				assert(S_comp = S) report "-1 failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
-				assert(Neg_F = Negative) report "-1 N failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
-				assert(Zero_F = Zero) report "-1 Z failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
+				wait for 5 ns;
+				assert(S_assert = S) report "Assert vsote failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
+				assert(Neg_F = Negative) report "N flag vsote failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
+				assert(Overflow_F = Overflow) report "V flag vsote failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
+				assert(Zero_F = Zero) report "Z flag vsote failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
+				
+				F <= "001"; -- S = X - Y
+				wait for 5 ns;
+				assert(S_assert = S) report "Assert razlike failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
+				assert(Neg_F = Negative) report "N flag razlike failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
+				assert(Overflow_F = Overflow) report "V flag razlike failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
+				assert(Zero_F = Zero) report "Z flag razlike failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
+				
+				F <= "010"; -- S = X + 1
+				wait for 5 ns;
+				assert(S_assert = S) report "Assert X + 1 failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
+				assert(Neg_F = Negative) report "N flag X + 1 failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
+				assert(Overflow_F = Overflow) report "V flag X + 1 failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
+				assert(Zero_F = Zero) report "Z flag X + 1 failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
+				
+				F <= "011"; -- S = X - 1
+				wait for 5 ns;
+				assert(S_assert = S) report "Assert X - 1 failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
+				assert(Neg_F = Negative) report "N flag X - 1 failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
+				assert(Overflow_F = Overflow) report "V flag X - 1 failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
+				assert(Zero_F = Zero) report "Z flag X - 1 failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
+				
+				F <= "100"; -- S = X + X
+				wait for 5 ns;
+				assert(S_assert = S) report "Assert X + X failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
+				assert(Neg_F = Negative) report "N flag X + X failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
+				assert(Overflow_F = Overflow) report "V flag X + X failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
+				assert(Zero_F = Zero) report "Z flag X + X failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
+				
+				F <= "101"; --  S = -1
+				wait for 5 ns;
+				assert(S_assert = S) report "Assert -1 failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
+				assert(Neg_F = Negative) report "N flag -1 failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
+				-- nerabimo gledat overflowa pri tej operaciji
+				assert(Zero_F = Zero) report "Z flag -1 failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
 								
-				F <= "110"; -- undefined operation
-				wait for 1 ns;
-				assert(zeros = S) report "0110 failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
+				F <= "110"; -- ne uporabljeno
+				wait for 5 ns;
+				assert(zeros = S) report "0110 (neuporabljeno) failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
 				
-				F <= "111"; -- undefined operation
-				wait for 1 ns;
-				assert(zeros = S) report "0111 failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
+				F <= "111"; -- ne uporabljeno
+				wait for 5 ns;
+				assert(zeros = S) report "0111 (neuporabljeno) failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
 				
-				M <= '1'; -- Logièni naèin
- 				F <= "000"; -- X and Y
-				wait for 1 ns;
+				
+				-------------------------------------------- LOGICNE OPERACIJE --------------------------------------------------------
+				
+				
+				M <= '1'; -- M = 1 -> logicni nacin
+ 				F <= "000"; -- S = X and Y
+				wait for 5 ns;
 				assert(X_and_Y = S) report "X and Y failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
 				
-				F <= "001"; -- X nand Y
-				wait for 1 ns;
+				F <= "001"; -- S = X nand Y
+				wait for 5 ns;
 				assert(X_nand_Y = S) report "X nand Y failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
 				
-				F <= "010"; -- X or Y
-				wait for 1 ns;
+				F <= "010"; -- S = X or Y
+				wait for 5 ns;
 				assert(X_or_Y = S) report "X or Y failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
 				
-				F <= "011"; -- X nor Y
-				wait for 1 ns;
+				F <= "011"; -- S = X nor Y
+				wait for 5 ns;
 				assert(X_nor_Y = S) report "X nor Y failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
 				
-				F <= "100"; -- X xor Y
-				wait for 1 ns;
+				F <= "100"; -- S = X xor Y
+				wait for 5 ns;
 				assert(X_xor_Y = S) report "X xor Y failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
 				
-				F <= "101"; -- X xnor Y
-				wait for 1 ns;
+				F <= "101"; -- S = X xnor Y
+				wait for 5 ns;
 				assert(X_xnor_Y = S) report "X xnor Y failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
 				
-				F <= "110"; -- X
-				wait for 1 ns;
-				assert(X = S) report "X failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
-				assert(Neg_F = Negative) report "X N failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
-				assert(Zero_F = Zero) report "X Z failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
+				F <= "110"; -- S = X
+				wait for 5 ns;
+				assert(S_assert = S) report " S = X failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
+				assert(Neg_F = Negative) report "S = X N flag failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
+				assert(Zero_F = Zero) report "S = X Z flag failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
 				
-				F <= "111"; -- Y
-				wait for 1 ns;
-				assert(Y = S) report "Y failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
-				assert(Neg_F = Negative) report "Y N failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
-				assert(Zero_F = Zero) report "Y Z failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
+				F <= "111"; -- S = Y
+				wait for 5 ns;
+				assert(S_assert = S) report " S = Y failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
+				assert(Neg_F = Negative) report "S = Y N flag failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
+				assert(Zero_F = Zero) report "S = Y Z flag failed. X:" & integer'image(i) & " Y:" & integer'image(j) severity error;
+			
 			end loop;
+		
 		end loop;
       wait;
-   end process;
+   
+	end process;
 	
-	-- racunanje za preverit pravilnost 
-	assert_proc: process (X_int, Y_int, F)
-	variable S_temp, X_temp, Y_temp : std_logic_vector(n-1 downto 0);
-	variable Res_temp : integer;
+	-- proces racunanja za preverit pravilnost 
+	assert_proc: process ( X, Y, F)
+	
+	variable S_temp : std_logic_vector(n-1 downto 0);
+	variable S_int : integer;
+	
 	begin
-		X_temp := std_logic_vector(to_signed(X_int, n));
-		Y_temp := std_logic_vector(to_signed(Y_int, n));
 		
 		case F is
 			-- S -> -1 v 2'K 
 			when "101" =>  
-				S_temp := not zeros;
-            Overflow_F <= '0';
+				S_temp := not zeros;  -- -1 v 2'K
+            Overflow_F <= '0';    -- overflowa ni
             
       when others =>
             
 			case F is
 				when "000" =>
-					Res_temp := X_int + Y_int;
+					S_int := to_integer(signed(X)) + to_integer(signed(Y));
             when "001" =>
-               Res_temp := X_int - Y_int;
+               S_int := to_integer(signed(X)) - to_integer(signed(Y));
             when "010" =>
-               Res_temp := X_int + 1;
+               S_int := to_integer(signed(X)) + 1;
             when "011" =>
-               Res_temp := X_int - 1;
+               S_int := to_integer(signed(X)) - 1;
             when "100" =>
-               Res_temp := X_int + X_int;
+               S_int := to_integer(signed(X)) + to_integer(signed(X));
             when "110" =>
-               Res_temp := X_int;
+               S_int := to_integer(signed(X));
             when "111" =>
-               Res_temp := Y_int;
+               S_int := to_integer(signed(Y));
             when others =>
-               Res_temp := 0;
+               S_int := 0;
 			end case;
             
 				-- preverjanje overflowa 
-            if Res_temp > 2**(n-1) - 1 or Res_temp < -(2**(n-1)) then
+            if S_int > 2**(n-1) - 1 or S_int < -(2**(n-1)) then
 					Overflow_F <= '1';
 				else
 					Overflow_F <= '0';
 				end if;
 			
-			-- potrebno je odsteti 2**(n-1) ce gremo cez, ali pristeti ce gremo pod -2**(n-1)
-			-- to se da resiti tudi z modulo operacijo
-			S_temp := std_logic_vector(to_unsigned(Res_temp mod 2**n , n));
+			-- potrebno je odrezati bite ce je prislo do overflowa
+			S_temp := std_logic_vector(to_unsigned(S_int mod 2**n , n));
+		
 		end case;
 
-		
-		
-		S_comp <= S_temp;
+		-- postavimo zastavico ce je izhod negativen
 		Neg_F <= S_temp(n-1);
 		
+		-- postavimo izhod za assertat
+		S_assert <= S_temp;
+		
+		-- postavimo zastavico ce je izhod = 0
 		if S_temp = zeros then
 			Zero_F <= '1';
 		else
 			Zero_F <= '0';
 		end if;
 		
-		X_and_Y <= X_temp and Y_temp;
-		X_nand_Y <= X_temp nand Y_temp;
-		X_or_Y <= X_temp or Y_temp;
-		X_nor_Y <= X_temp nor Y_temp;
-		X_xor_Y <= X_temp xor Y_temp;
-		X_xnor_Y <= X_temp xnor Y_temp;
+		-- logicne 
+		X_and_Y <= X and Y;
+		X_nand_Y <= X nand Y;
+		X_or_Y <= X or Y;
+		X_nor_Y <= X nor Y;
+		X_xor_Y <= X xor Y;
+		X_xnor_Y <= X xnor Y;
 		
 	end process;
 

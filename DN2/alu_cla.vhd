@@ -22,19 +22,20 @@ architecture NDV of alu_cla is
 	
 	
 	signal S_sig, Y_sig : std_logic_vector(n-1 downto 0); -- pomozni signali ker S in Y sta lahko negativna
-	signal n_add_sub : std_logic; -- izbira ali sestevamo ali odstevamo
+	signal nAddSub : std_logic; -- izbira ali sestevamo ali odstevamo
 	signal alu_operation : std_logic_vector(3 downto 0);  -- sestavimo skupaj mode select in opcode
 	
 	constant zeros : std_logic_vector(n-1 downto 0) := (others => '0');
 	constant one   : std_logic_vector(n-1 downto 0) := (0 => '1', others => '0');
 begin
+
 	U1: cla_add_n_bit
 		generic map (n => n)
 		port map (
-			Cin => n_add_sub, X => X, Y => Y_sig, S => S_sig, Gout => Gout, Pout => Pout, Cout => Cout
+			Cin => nAddSub, X => X, Y => Y_sig, S => S_sig, Gout => Gout, Pout => Pout, Cout => Cout
 		);
 		
-		n_add_sub <= alu_operation(0);
+		nAddSub <= alu_operation(0);
 		
 		alu_operation <= M & F;
 		
@@ -72,7 +73,7 @@ begin
 			X xnor Y 	when "1101",  -- S = X xnor X
 			X 				when "1110",  -- S = X 
 			Y 				when "1111",  -- S = Y
-			zeros		   when others;
+			zeros		   when others;  -- S = 0 v ostalih primerih
 		
 		-- Y lahko zasede vec vrednosti
 
@@ -84,6 +85,4 @@ begin
 			       X when "0100", -- X + X
 					 Y when others; -- pri logicnih operacijah je Y vedno Y
 				 
-		
-
 end NDV;
